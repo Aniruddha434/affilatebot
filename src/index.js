@@ -1071,11 +1071,47 @@ app.post('/admin/images/clear-cache', adminAuthMiddleware, async (req, res) => {
   app.post('/trigger', async (req, res) => {
     logger.info('Manual trigger requested via API');
     res.json({ message: 'Job triggered manually' });
-    
+
     // Run job in background
     scheduler.runManually().catch(error => {
       logger.error('Manual job execution failed', error);
     });
+  });
+
+  // ============================================
+  // VERCEL CRON JOB ENDPOINT
+  // ============================================
+  // This endpoint is called by Vercel Cron Jobs every 2 hours
+  // It triggers the deal-finding job without needing a long-running process
+  app.get('/api/cron', async (req, res) => {
+    try {
+      // Verify cron secret for security
+      const cronSecret = process.env.CRON_SECRET;
+      const authHeader = req.headers.authorization;
+
+      if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+        logger.warn('Unauthorized cron request');
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      logger.info('🔄 Vercel Cron Job triggered');
+
+      // Run the deal-finding job
+      await scheduler.runManually();
+
+      res.status(200).json({
+        success: true,
+        message: 'Cron job executed successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('Cron job execution failed', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
   });
 
   app.listen(PORT, () => {

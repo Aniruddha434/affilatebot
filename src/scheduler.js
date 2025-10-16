@@ -185,9 +185,25 @@ class Scheduler {
 
   /**
    * Start the cron scheduler
+   * In production (Vercel), node-cron is disabled in favor of Vercel Cron Jobs
    */
   start() {
     try {
+      // Check if running on Vercel (production)
+      const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+
+      if (isVercel) {
+        logger.info('🌐 Running on Vercel - Using Vercel Cron Jobs instead of node-cron');
+        logger.info('   Cron jobs will be triggered via /api/cron endpoint');
+        logger.info('   Schedule: Every 2 hours (0 */2 * * *)');
+        this.isStarted = true;
+        logger.success('✅ Scheduler ready for Vercel Cron Jobs');
+        return;
+      }
+
+      // Development mode: Use node-cron
+      logger.info('📍 Running in development mode - Using node-cron');
+
       // Validate cron expression
       if (!cron.validate(this.cronSchedule)) {
         throw new Error(`Invalid cron schedule: ${this.cronSchedule}`);
