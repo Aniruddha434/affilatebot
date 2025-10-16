@@ -151,8 +151,13 @@ async function initializeModules() {
     logger.info(`📊 Loaded settings for ${platformSettings.length} platforms`);
 
     // Initialize Telegram bot
-    telegramBot.initialize();
-    logger.success('✅ Telegram bot initialized');
+    try {
+      telegramBot.initialize();
+      logger.success('✅ Telegram bot initialized');
+    } catch (error) {
+      logger.error('Failed to initialize Telegram bot', error);
+      throw error;
+    }
 
     // Initialize image manager
     await imageManager.initialize();
@@ -193,11 +198,19 @@ async function startBot() {
       process.exit(1);
     }
 
-    // Send startup notification to Telegram
-    await telegramBot.sendStartupNotification();
-
     // Start scheduler
     scheduler.start();
+
+    // Send startup notification to Telegram (after scheduler is started)
+    // Add a small delay to ensure everything is ready
+    setTimeout(async () => {
+      try {
+        logger.info('Sending startup notification to Telegram...');
+        await telegramBot.sendStartupNotification();
+      } catch (error) {
+        logger.error('Failed to send startup notification', error);
+      }
+    }, 2000); // Wait 2 seconds after scheduler starts
 
     logger.info('');
     logger.info('═══════════════════════════════════════════════════');

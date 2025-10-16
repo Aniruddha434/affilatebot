@@ -255,7 +255,15 @@ The bot will retry on the next scheduled run.
    */
   async sendStartupNotification() {
     try {
-      if (!this.bot) return;
+      if (!this.bot) {
+        logger.warn('⚠️  Telegram bot not initialized, cannot send startup notification');
+        return false;
+      }
+
+      if (!this.channelId) {
+        logger.warn('⚠️  Telegram channel ID not set, cannot send startup notification');
+        return false;
+      }
 
       const message = `
 🤖 *Amazon Deals Bot Started*
@@ -270,9 +278,11 @@ Stay tuned for amazing deals! 🎉
         parse_mode: 'Markdown'
       });
 
-      logger.info('Startup notification sent');
+      logger.success('✅ Startup notification sent to Telegram');
+      return true;
     } catch (error) {
       logger.error('Failed to send startup notification', error);
+      return false;
     }
   }
 }
