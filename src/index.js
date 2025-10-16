@@ -30,6 +30,9 @@ const scheduler = require('./scheduler');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Check if running on Vercel (serverless)
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+
 // Rate limiting store
 const rateLimitStore = new Map();
 
@@ -156,7 +159,9 @@ async function initializeModules() {
       logger.success('✅ Telegram bot initialized');
     } catch (error) {
       logger.error('Failed to initialize Telegram bot', error);
-      throw error;
+      logger.warn('⚠️  Telegram bot will not be available, but bot will continue running');
+      logger.warn('   Check your TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID');
+      // Don't throw - allow bot to continue without Telegram
     }
 
     // Initialize image manager
@@ -199,7 +204,13 @@ async function startBot() {
     }
 
     // Start scheduler
-    scheduler.start();
+    try {
+      scheduler.start();
+      logger.success('✅ Scheduler started');
+    } catch (error) {
+      logger.error('Failed to start scheduler', error);
+      logger.warn('⚠️  Scheduler will not run, but bot will continue');
+    }
 
     // Send startup notification to Telegram (after scheduler is started)
     // Add a small delay to ensure everything is ready
@@ -1047,10 +1058,16 @@ app.post('/admin/images/clear-cache', adminAuthMiddleware, async (req, res) => {
         logger.error('Image cache health check failed', error);
       }
 
-      const healthy = Object.values(checks).every(v => v === true);
+      // Consider healthy if server, database, and scheduler are working
+      // Telegram and imageCache are optional
+      const criticalChecks = checks.server && checks.database && checks.scheduler;
+      const allChecks = Object.values(checks).every(v => v === true);
 
-      res.status(healthy ? 200 : 503).json({
-        status: healthy ? 'healthy' : 'degraded',
+      const status = allChecks ? 'healthy' : (criticalChecks ? 'degraded' : 'unhealthy');
+      const statusCode = allChecks ? 200 : (criticalChecks ? 200 : 503);
+
+      res.status(statusCode).json({
+        status: status,
         uptime: process.uptime(),
         checks,
         scheduler: {
@@ -1114,9 +1131,13 @@ app.post('/admin/images/clear-cache', adminAuthMiddleware, async (req, res) => {
     }
   });
 
-  app.listen(PORT, () => {
-    logger.info(`🌐 Health check server running on port ${PORT}`);
-  });
+  // Only call listen() in development mode
+  // In Vercel (serverless), the app is exported and Vercel handles the server
+  if (!isVercel) {
+    app.listen(PORT, () => {
+      logger.info(`🌐 Health check server running on port ${PORT}`);
+    });
+  }
 }
 
 /**
@@ -1140,31 +1161,46 @@ function setupGracefulShutdown() {
 /**
  * Main execution
  */
-(async () => {
-  try {
-    // Setup health check server
-    setupHealthCheckServer();
 
-    // Setup graceful shutdown
-    setupGracefulShutdown();
+if (isVercel) {
+  // Vercel serverless mode: Just export the app, don't start a server
+  logger.info('🌐 Running on Vercel (serverless mode)');
+  logger.info('   Bot will be triggered via Vercel Cron Jobs');
+  logger.info('   Health and API endpoints available');
 
-    // Start the bot
-    await startBot();
+  // Setup health check server (Express app only, no listen)
+  setupHealthCheckServer();
 
-  } catch (error) {
-    logger.error('Unhandled error in main execution', error);
+  // Export app for Vercel
+  module.exports = app;
+} else {
+  // Development mode: Start the bot normally
+  (async () => {
+    try {
+      // Setup health check server
+      setupHealthCheckServer();
+
+      // Setup graceful shutdown
+      setupGracefulShutdown();
+
+      // Start the bot
+      await startBot();
+
+    } catch (error) {
+      logger.error('Unhandled error in main execution', error);
+      process.exit(1);
+    }
+  })();
+
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Promise Rejection', reason);
+  });
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception', error);
     process.exit(1);
-  }
-})();
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Promise Rejection', reason);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception', error);
-  process.exit(1);
-});
+  });
+}
 
