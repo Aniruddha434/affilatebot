@@ -1,0 +1,134 @@
+================================================================================
+VERCEL ENVIRONMENT VARIABLES - COPY & PASTE READY
+================================================================================
+
+REQUIRED VARIABLES (Must Add These 8):
+================================================================================
+
+1. AMAZON_ACCESS_KEY
+   Value: your_access_key_here
+
+2. AMAZON_SECRET_KEY
+   Value: your_secret_key_here
+
+3. AMAZON_PARTNER_TAG
+   Value: 4340c5-21
+
+4. AMAZON_REGION
+   Value: IN
+
+5. TELEGRAM_BOT_TOKEN
+   Value: 7731512306:AAHEhFMEydtCZajLx0g8HT_iR8iuN2SpfzE
+
+6. TELEGRAM_CHANNEL_ID
+   Value: @amazondealsmake
+
+7. SUPABASE_URL
+   Value: https://dbnldknxqqsysfwlswtb.supabase.co
+
+8. SUPABASE_KEY
+   Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRibmxka254cXFzeXNmd2xzd3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyOTg0MDgsImV4cCI6MjA3NDg3NDQwOH0.k9jP4xRGu9AsuJo3T--76FuPaZ480fsMqTOv8CoFGO0
+
+================================================================================
+
+OPTIONAL VARIABLES (Recommended):
+================================================================================
+
+9. MIN_DISCOUNT_PERCENTAGE
+   Value: 85
+
+10. CRON_SCHEDULE
+    Value: */2 * * * *
+
+11. MAX_PRODUCTS_PER_RUN
+    Value: 10
+
+12. PORT
+    Value: 3000
+
+13. NODE_ENV
+    Value: production
+
+================================================================================
+
+HOW TO ADD TO VERCEL:
+================================================================================
+
+1. Go to: https://vercel.com/dashboard
+2. Click on "affilatebot" project
+3. Click "Settings" tab
+4. Click "Environment Variables" in left sidebar
+5. For each variable:
+   - Click "Add New"
+   - Enter Variable Name (from above)
+   - Enter Variable Value (from above)
+   - Select "Production"
+   - Click "Save"
+6. Go to "Deployments" tab
+7. Click "Redeploy" on latest deployment
+8. Wait 2-3 minutes for deployment
+
+================================================================================
+
+IMPORTANT NOTES:
+================================================================================
+
+✅ These values are from your .env file
+✅ Safe to add to Vercel (encrypted)
+✅ Never commit .env to GitHub
+✅ Vercel encrypts all environment variables
+✅ Only add required variables first
+✅ Add optional variables after testing
+
+================================================================================
+
+VERIFICATION:
+================================================================================
+
+After adding variables and redeploying:
+
+1. Check health endpoint:
+   https://affilatebot-[random].vercel.app/health
+
+2. Check Vercel logs:
+   - Vercel Dashboard → affilatebot → Deployments → Latest → Logs
+
+3. Test Telegram:
+   - Check your Telegram channel for posts
+
+4. Verify bot is running:
+   - Look for "Bot initialized" in logs
+
+================================================================================
+
+TROUBLESHOOTING:
+================================================================================
+
+Bot not starting?
+- Check all required variables are added
+- Check variable values have no extra spaces
+- Check Vercel logs for error messages
+
+No Telegram posts?
+- Verify TELEGRAM_BOT_TOKEN is correct
+- Verify TELEGRAM_CHANNEL_ID is correct
+- Verify bot is admin in channel
+
+Database connection error?
+- Verify SUPABASE_URL is correct
+- Verify SUPABASE_KEY is correct
+
+================================================================================
+
+NEXT STEPS:
+================================================================================
+
+1. Open Vercel dashboard
+2. Add all 8 required variables
+3. Redeploy
+4. Verify deployment
+5. Check Telegram channel
+6. Bot is live! 🚀
+
+================================================================================
+

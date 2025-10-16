@@ -52,14 +52,33 @@ app.use(cors({
  */
 function validateConfiguration() {
   logger.info('Validating configuration...');
-  
+
+  // REQUIRED: Telegram and Supabase (essential for bot operation)
   const requiredVars = [
-    'AMAZON_ACCESS_KEY',
-    'AMAZON_SECRET_KEY',
-    'AMAZON_PARTNER_TAG',
     'TELEGRAM_BOT_TOKEN',
     'TELEGRAM_CHANNEL_ID'
   ];
+
+  // OPTIONAL: Amazon API credentials (bot can run with scraper instead)
+  const amazonApiCredentials = [
+    'AMAZON_ACCESS_KEY',
+    'AMAZON_SECRET_KEY',
+    'AMAZON_PARTNER_TAG'
+  ];
+
+  // Check required variables
+  const missing = requiredVars.filter(v => !process.env[v]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
+  // Check Amazon credentials (optional, but warn if missing)
+  const missingAmazonCredentials = amazonApiCredentials.filter(v => !process.env[v]);
+  if (missingAmazonCredentials.length > 0) {
+    logger.warn('⚠️  Amazon API credentials not configured');
+    logger.warn('   Bot will use Amazon Scraper instead (no API credentials needed)');
+    logger.warn('   To use official PA-API, set: AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, AMAZON_PARTNER_TAG');
+  }
 
   // Supabase: Either MCP (PROJECT_REF) or manual (URL + KEY)
   const hasSupabaseMCP = !!process.env.SUPABASE_PROJECT_REF;

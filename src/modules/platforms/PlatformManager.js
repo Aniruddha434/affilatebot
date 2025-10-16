@@ -37,12 +37,18 @@ class PlatformManager {
    */
   async initialize() {
     logger.info('Initializing Platform Manager...');
-    
+
     const initPromises = [];
     for (const [name, adapter] of this.platforms.entries()) {
       initPromises.push(
         adapter.initialize()
-          .then(() => logger.success(`✅ ${name} adapter initialized`))
+          .then(() => {
+            if (adapter.isDisabled) {
+              logger.warn(`⚠️  ${name} adapter disabled (missing configuration)`);
+            } else {
+              logger.success(`✅ ${name} adapter initialized`);
+            }
+          })
           .catch(err => logger.error(`Failed to initialize ${name} adapter`, err))
       );
     }
@@ -183,6 +189,12 @@ class PlatformManager {
 
       if (!adapter || !adapter.isReady()) {
         logger.warn(`Platform ${platformName} is not ready, skipping`);
+        continue;
+      }
+
+      // Skip disabled adapters (e.g., Amazon API when credentials are missing)
+      if (adapter.isDisabled) {
+        logger.debug(`Platform ${platformName} is disabled, skipping`);
         continue;
       }
 

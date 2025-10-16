@@ -30,9 +30,12 @@ class AmazonAdapter extends PlatformAdapter {
   async initialize() {
     await super.initialize();
 
-    // Validate credentials
+    // Check if credentials are available
     if (!this.config.accessKey || !this.config.secretKey || !this.config.partnerTag) {
-      throw new Error('Amazon credentials not configured. Please set AMAZON_ACCESS_KEY, AMAZON_SECRET_KEY, and AMAZON_PARTNER_TAG in .env');
+      logger.warn('⚠️  Amazon PA-API credentials not configured');
+      logger.warn('   This adapter will be disabled. Use Amazon Scraper instead.');
+      this.isDisabled = true;
+      return;
     }
 
     logger.success('Amazon adapter initialized successfully');
