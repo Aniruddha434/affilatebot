@@ -1007,7 +1007,7 @@ app.post('/admin/images/clear-cache', adminAuthMiddleware, async (req, res) => {
         server: true,
         database: false,
         telegram: false,
-        scheduler: scheduler.isRunning,
+        scheduler: scheduler.isStarted, // Check if scheduler is started, not if job is running
         imageCache: false
       };
 
@@ -1039,7 +1039,14 @@ app.post('/admin/images/clear-cache', adminAuthMiddleware, async (req, res) => {
       res.status(healthy ? 200 : 503).json({
         status: healthy ? 'healthy' : 'degraded',
         uptime: process.uptime(),
-        checks
+        checks,
+        scheduler: {
+          isStarted: scheduler.isStarted,
+          isRunning: scheduler.isRunning,
+          jobCount: scheduler.jobCount,
+          lastJobTime: scheduler.lastJobTime,
+          cronSchedule: scheduler.cronSchedule
+        }
       });
     } catch (error) {
       logger.error('Health check error', error);

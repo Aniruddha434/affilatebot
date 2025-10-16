@@ -17,6 +17,9 @@ class Scheduler {
   constructor() {
     this.cronJob = null;
     this.isRunning = false;
+    this.isStarted = false; // Track if scheduler has been started
+    this.lastJobTime = null; // Track last job execution time
+    this.jobCount = 0; // Track number of jobs executed
     // Default: Every 2 hours (0 */2 * * *)
     this.cronSchedule = process.env.CRON_SCHEDULE || '0 */2 * * *';
     this.maxProductsPerRun = parseInt(process.env.MAX_PRODUCTS_PER_RUN) || 10;
@@ -174,7 +177,9 @@ class Scheduler {
       }
     } finally {
       this.isRunning = false;
-      logger.info('Job execution finished\n');
+      this.lastJobTime = new Date();
+      this.jobCount++;
+      logger.info(`Job execution finished (Total jobs: ${this.jobCount})\n`);
     }
   }
 
@@ -193,20 +198,26 @@ class Scheduler {
 
       // Create cron job
       this.cronJob = cron.schedule(this.cronSchedule, async () => {
+        logger.info('🔄 Scheduled job triggered by cron');
         await this.runDealFetchJob();
       });
 
+      this.isStarted = true;
       logger.success('✅ Scheduler started successfully');
       logger.info('Next execution will occur according to the cron schedule');
 
       // Run immediately on startup (optional - comment out if not desired)
       logger.info('Running initial job immediately...');
       setTimeout(() => {
-        this.runDealFetchJob();
+        logger.info('🔄 Running initial startup job...');
+        this.runDealFetchJob().catch(error => {
+          logger.error('Initial startup job failed', error);
+        });
       }, 5000); // Wait 5 seconds after startup
 
     } catch (error) {
       logger.error('Failed to start scheduler', error);
+      this.isStarted = false;
       throw error;
     }
   }
